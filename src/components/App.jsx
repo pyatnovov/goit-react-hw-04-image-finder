@@ -1,97 +1,90 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import './App.css';
 import { fetchImages } from 'services/fetchImges';
 import { Searchbar } from './Searchbar/Searchbar';
 import { Button } from './Button/Button';
 import { Loader } from './Loader/Loader';
 import { ImageGallery } from './ImageGallery/ImageGallery';
-export class App extends Component {
-  state = {
-    inputData: 'cat',
-    items: [],
-    status: 'idle',
-    totalHits: 0,
-    page: 1,
-  };
+export const App = () => {
+  const [Data, setData] = useState('');
+  const [Items, setItems] = useState([]);
+  const [Status, setStatus] = useState('idle');
+  const [TotalHits, setTotalHits] = useState(0);
+  const [Page, setPage] = useState(1);
 
-  handleSubmit = async inputData => {
-    if (inputData.trim() === '') {
+  const handleSubmit = async Data => {
+    if (Data.trim() === '') {
       alert('Введіть назву фотографії');
       return;
     } else {
       try {
-        this.setState({ status: 'pending' });
-        const { totalHits, hits } = await fetchImages(
-          inputData,
-          this.state.page
-        );
+        setStatus('pending');
+        const { totalHits, hits } = await fetchImages(Data, Page);
         if (hits.length < 1) {
-          this.setState({ status: 'idle' });
+          setStatus('idle');
           alert('Немає фото');
         } else {
-          this.setState({
-            items: hits,
-            inputData,
-            totalHits: totalHits,
-            status: 'resolved',
-          });
+          setItems(hits);
+          setData(Data);
+          setTotalHits(totalHits);
+          setStatus('resolved');
         }
       } catch (error) {
-        this.setState({ status: 'rejected' });
+        setStatus('rejected');
       }
     }
   };
-  AddMore = async () => {
-    const { inputData } = this.state;
-    this.setState({ status: 'pending' });
+
+  const AddMore = async () => {
+    setStatus('pending');
     try {
-      const { hits } = await fetchImages(inputData, (this.state.page += 1));
-      this.setState(prevState => ({
-        items: [...prevState.items, ...hits],
-        status: 'resolved',
-      }));
+      const { hits } = await fetchImages(
+        Data,
+        setPage(prev => prev + 1)
+      );
+      setItems(prevState => {
+        return [...prevState, ...hits];
+      });
+      setStatus('resolved');
     } catch (error) {
-      this.setState({ status: 'rejected' });
+      setStatus('rejected');
     }
   };
 
-  render() {
-    const { status, totalHits, items } = this.state;
-    if (status === 'idle') {
-      return (
-        <div className="App">
-          <Searchbar onSubmit={this.handleSubmit} />
-        </div>
-      );
-    }
-    if (status === 'pending') {
-      return (
-        <div className="App">
-          <Searchbar onSubmit={this.handleSubmit} />
-          <ImageGallery page={this.state.page} items={this.state.items} />
-          <Loader />
-          {totalHits > 12 && <Button onClick={this.AddMore} />}
-        </div>
-      );
-    }
-    if (status === 'rejected') {
-      return (
-        <div className="App">
-          <Searchbar onSubmit={this.handleSubmit} />
-          <span>Wrong!!</span>
-        </div>
-      );
-    }
-    if (status === 'resolved') {
-      return (
-        <div className="App">
-          <Searchbar onSubmit={this.handleSubmit} />
-          <ImageGallery page={this.state.page} items={this.state.items} />
-          {totalHits > 12 && totalHits > items.length && (
-            <Button onClick={this.AddMore} />
-          )}
-        </div>
-      );
-    }
+  if (Status === 'idle') {
+    return (
+      <div className="App">
+        <Searchbar onSubmit={handleSubmit} />
+      </div>
+    );
   }
-}
+  if (Status === 'pending') {
+    return (
+      <div className="App">
+        <Searchbar onSubmit={handleSubmit} />
+        <ImageGallery page={Page} items={Items} />
+        <Loader />
+        {TotalHits > 12 && <Button onClick={AddMore} />}
+      </div>
+    );
+  }
+  if (Status === 'rejected') {
+    return (
+      <div className="App">
+        <Searchbar onSubmit={handleSubmit} />
+        <span>Wrong!!</span>
+      </div>
+    );
+  }
+  if (Status === 'resolved') {
+    return (
+      <div className="App">
+        <Searchbar onSubmit={handleSubmit} />
+        <ImageGallery page={Page} items={Items} />
+        {TotalHits > 12 && TotalHits > Items.length && (
+          <Button onClick={AddMore} />
+        )}
+      </div>
+    );
+  }
+};
