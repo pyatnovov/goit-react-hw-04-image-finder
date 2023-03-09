@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { Modalwindow, Overlay } from './Modal.styled';
 
 const RootModal = document.querySelector('#modal-root');
-export class Modal extends Component {
+export class ModalWindow extends Component {
   KeyPress = e => {
     if (e.code === 'Escape') {
       this.props.onClose();
@@ -37,7 +37,7 @@ export class Modal extends Component {
   }
 }
 
-Modal.propTypes = {
+ModalWindow.propTypes = {
   image: PropTypes.object,
   onClose: PropTypes.func,
 };
